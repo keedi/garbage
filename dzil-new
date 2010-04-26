@@ -2,8 +2,11 @@
 
 use common::sense;
 use File::Path;
+use File::Basename;
 
-die "Usage: $0 <Module::Name::Here>\n" unless @ARGV > 0;
+my $prog = basename $0;
+
+die "Usage: $prog <Module::Name::Here>\n" unless @ARGV > 0;
 
 ( my $module = shift ) =~ s{-}{::}g;
 ( my $module_name = $module ) =~ s{::}{-}g;
@@ -205,3 +208,4 @@ That's all! Enjoy Perl!!
                                             - Keedi Kim
 
 END_NOTICE
+
