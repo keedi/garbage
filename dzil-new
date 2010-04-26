@@ -46,7 +46,6 @@ major = 0
 [NextRelease]
 [PodWeaver]
 [AutoPrereq]
-[UploadToCPAN]
 END_DIST_INI
 
 my $weaver_ini = <<END_WEAVER_INI;
@@ -177,6 +176,10 @@ Just make your own config file and fill it with CPAN account information:
     password = perl_and_distzilla_rocks!
     \$
 
+Then add following line to your dist.ini:
+
+    [UploadToCPAN]
+
 Now enter your module's directory and just make your CPAN module:
 
     \$ cd $module_path
@@ -184,7 +187,12 @@ Now enter your module's directory and just make your CPAN module:
 
 While making your own module, don't forget testing:
 
-    \$ vi t/00-compile.t
+    \$ ls t/
+    00-compile.t
+    01-attributes.t
+    02-methods.t
+    03-actions.t
+    ...
 
 If you want to run your test suite, use dzil:
 
@@ -203,9 +211,7 @@ When everything is quite ok, then let's bring it to CPAN!:
 
     \$ dzil release
 
-That's all! Enjoy Perl!!
-
-                                            - Keedi Kim
+That's all! Enjoy Perl with Dist::Zilla!
 
 END_NOTICE
 
