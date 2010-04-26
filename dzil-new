@@ -1,0 +1,207 @@
+#!/usr/bin/env perl
+
+use common::sense;
+use File::Path;
+
+die "Usage: $0 <Module::Name::Here>\n" unless @ARGV > 0;
+
+( my $module = shift ) =~ s{-}{::}g;
+( my $module_name = $module ) =~ s{::}{-}g;
+
+my @namespaces = split "-", $module;
+my $test_path   = "$module_name/t";
+my $module_path = "$module_name/lib";
+my $module_main = $namespaces[0];
+if (@namespaces > 2) {
+    $module_path = join '/', $module_path, @namespaces[0 .. $#namespaces - 1];
+    $module_main = $namespaces[-1];
+}
+
+mkpath( $module_name, $test_path, $module_path, { mode => 0777 } );
+
+my $changes = <<END_CHANGES;
+Revision history for {{\$dist->name}}
+
+{{\$NEXT}}
+    first release
+END_CHANGES
+
+my $dist_ini = <<END_DIST_INI;
+name    = $module_name
+author  = Your Name <your at email.com>
+license = Perl_5
+copyright_holder = Your Name
+
+[\@Filter]
+bundle = \@Classic
+remove = PodVersion
+
+[AutoVersion]
+major = 0
+
+[MetaJSON]
+[NextRelease]
+[PodWeaver]
+[AutoPrereq]
+[UploadToCPAN]
+END_DIST_INI
+
+my $weaver_ini = <<END_WEAVER_INI;
+[\@CorePrep]
+
+[Encoding]
+
+[Name]
+[Version]
+
+[Region  / prelude]
+
+[Generic / SYNOPSIS]
+[Generic / DESCRIPTION]
+[Generic / CAUTION]
+[Generic / OVERVIEW]
+
+[Collect / ATTRIBUTES]
+command = attr
+
+[Collect / METHODS]
+command = method
+
+[Leftovers]
+
+[Region  / postlude]
+
+[Authors]
+[Legal]
+END_WEAVER_INI
+
+my $main_module = <<END_MAIN_MODULE;
+package $module;
+# ENCODING: utf-8
+# ABSTRACT: write short description here...
+
+use namespace::autoclean;
+
+=head1 SYNOPSIS
+
+    use $module;
+    # write your own synopsis here...
+
+=head1 DESCRIPTION
+
+write your own description here...
+
+=cut
+
+# use Perl modules here...
+#use common::sense;
+
+=attr my_attribute_1
+
+This attribute stores the ...  which is the ...
+
+=cut
+
+=method my_method_1
+
+    show its prototype
+
+This method will ...
+
+=cut
+
+sub my_method_1 {
+}
+
+#
+# your private function goes here...
+#
+sub _my_private_function_1 {
+}
+
+1;
+
+END_MAIN_MODULE
+
+{
+    open my $fh, '>', "$module_name/dist.ini"
+        or die "cannot open [$module_name/dist.ini]: $!\n";
+    print $fh $dist_ini;
+    close $fh;
+}
+
+{
+    open my $fh, '>', "$module_name/weaver.ini"
+        or die "cannot open [$module_name/weaver.ini]: $!\n";
+    print $fh $weaver_ini;
+    close $fh;
+}
+
+{
+    open my $fh, '>', "$module_name/Changes"
+        or die "cannot open [$module_name/Changes]: $!\n";
+    print $fh $changes;
+    close $fh;
+}
+
+{
+    open my $fh, '>', "$module_path/$module_main.pm"
+        or die "cannot open [$module_path/$module_main.pm]: $!\n";
+    print $fh $main_module;
+    close $fh;
+}
+
+use File::Find::Rule;
+my $main_module_path = join '/', @namespaces[0 .. $#namespaces - 1];
+
+print <<END_NOTICE;
+Just finished generating skeleton files for your [$module]:
+
+ @{[ map "   $_\n", sort File::Find::Rule->in($module_name) ]}
+
+Maybe you'll need following modules, just install them:
+
+    - Pod::Weaver::Section::Encoding
+    - Dist::Zilla::Plugin::PodWeaver 
+
+If you are the one of the CPAN author,
+then you might want to upload your module.
+Just make your own config file and fill it with CPAN account information:
+
+    \$ cat ~/.dzil/config.ini
+    [=Dist::Zilla::App::Command::release]
+    user     = KEEDI
+    password = perl_and_distzilla_rocks!
+    \$
+
+Now enter your module's directory and just make your CPAN module:
+
+    \$ cd $module_path
+    \$ vi $main_module_path/$module_main.pm
+
+While making your own module, don't forget testing:
+
+    \$ vi t/00-compile.t
+
+If you want to run your test suite, use dzil:
+
+    \$ dzil test
+
+After test, now you are ready to build your own module:
+
+    \$ dzil build
+
+During the development process if there are too confuse
+due to build result objects, then clean them with dzil:
+
+    \$ dzil clean
+
+When everything is quite ok, then let's bring it to CPAN!:
+
+    \$ dzil release
+
+That's all! Enjoy Perl!!
+
+                                            - Keedi Kim
+
+END_NOTICE
