@@ -1,0 +1,5 @@
+Scripts List
+
+    dzil-new
+        helper script for Dist::Zilla, since "dzil new" doesn't work
+
