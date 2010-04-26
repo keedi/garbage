@@ -11,7 +11,7 @@ die "Usage: $prog <Module::Name::Here>\n" unless @ARGV > 0;
 ( my $module = shift ) =~ s{-}{::}g;
 ( my $module_name = $module ) =~ s{::}{-}g;
 
-my @namespaces = split "-", $module;
+my @namespaces = split "::", $module;
 my $test_path   = "$module_name/t";
 my $module_path = "$module_name/lib";
 my $module_main = $namespaces[0];
