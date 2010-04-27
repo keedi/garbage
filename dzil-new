@@ -15,7 +15,7 @@ my @namespaces = split "::", $module;
 my $test_path   = "$module_name/t";
 my $module_path = "$module_name/lib";
 my $module_main = $namespaces[0];
-if (@namespaces > 2) {
+if (@namespaces > 1) {
     $module_path = join '/', $module_path, @namespaces[0 .. $#namespaces - 1];
     $module_main = $namespaces[-1];
 }
@@ -183,7 +183,7 @@ Then add following line to your dist.ini:
 Now enter your module's directory and just make your CPAN module:
 
     \$ cd $module_path
-    \$ vi $main_module_path/$module_main.pm
+    \$ vi $module_main.pm
 
 While making your own module, don't forget testing:
 
