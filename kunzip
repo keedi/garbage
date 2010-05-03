@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Std;
+
+use Encode qw(encode decode find_encoding);
+use Encode::KR;
+use Encode::JP;
+use Encode::CN;
+
+use Archive::Zip qw(:ERROR_CODES);
+
+my %args;
+getopts('f:t:d:nvj', \%args);
+
+my @zip_files   = @ARGV;
+
+my $destination = $args{d};
+my $test        = !$args{n};
+my $verbose     = $args{v};
+my $current     = $args{j};
+
+my $is_needed_encoding_conversion = 0;
+my $encoding_from;
+my $encoding_to;
+
+die_with_usage("Needs compressed zip file" ) unless @zip_files >= 1;
+die_with_usage("-f and -t is both needed or do not use neither") unless !($args{f} xor $args{t});
+if ( exists $args{f} and exists $args{t} ) {
+    die_with_usage("Invalid -f encoding: $args{f}") unless is_available_encoding($args{f});
+    die_with_usage("Invalid -t encoding: $args{t}") unless is_available_encoding($args{t});
+
+    $is_needed_encoding_conversion = 1;
+    $encoding_from = $args{f};
+    $encoding_to   = $args{t};
+}
+
+my $zip = Archive::Zip->new();
+
+LOOP_EXTRACT:
+for my $zip_file ( @zip_files ) {
+
+    print "Extracting [$zip_file]\n" if $test or $verbose;
+
+    # 파일이 존재하는지 검사
+    if ( ! -f $zip_file ) {
+        warn "Can't find $zip_file\n";
+        next LOOP_EXTRACT;
+    }
+
+    # 해당 파일로 Archive::Zip 객체 생성에 문제가 없는지 검사
+    my $status = $zip->read( $zip_file );
+    if ( $status != AZ_OK ) {
+        warn "Read of $zip_file failed\n";
+        next LOOP_EXTRACT;
+    }
+
+    my @member_names = $zip->memberNames();
+    for my $member_name ( @member_names ) {
+        my $oldname;
+        my $newname;
+
+        # -f, -t 여부에 따라 파일 이름의 인코딩 변경할 것인가?
+        if ( $is_needed_encoding_conversion ) {
+            $oldname = $member_name;
+            $newname = encode($encoding_to, decode($encoding_from, $oldname));
+        }
+        else {
+            $oldname = $member_name;
+            $newname = $member_name;
+        }
+
+        # j 옵션 처리: without path
+        if ( $current ) {
+            $newname =~ s{.*/}{};
+        }
+
+        # d 옵션 처리: 위치 지정
+        if ( $destination ) {
+            $newname = "$destination/$newname";
+        }
+
+        if ( $test ) {
+            print "  Test: [$oldname] => [$newname]\n";
+        }
+        else {
+            print "  Extracting: [$oldname] => [$newname]\n" if $verbose;
+
+            $status = $zip->extractMember($oldname, $newname);
+            die "Extracting [$oldname] from [$zip_file] failed\n" if $status != AZ_OK;
+        }
+    }
+
+    print "Completed extracting [$zip_file]\n\n" if $test or $verbose;
+}
+
+# 변환을 위해 사용할 수 있는 인코딩 종류 반환
+sub get_available_encoding {
+    my @encoding_list = Encode::encodings(":all");
+    return @encoding_list;
+}
+
+# 사용자가 입력한 인코딩이 사용 가능한 포맷인지 확인
+sub is_available_encoding {
+    my $user_encoding = shift @_;
+    my $encoding = find_encoding($user_encoding);
+    my $result = defined $encoding ? $encoding->name : undef;
+    return $result;
+}
+
+# 에러 메시지와 사용방법을 출력하고 종료
+sub die_with_usage {
+    my $message = shift @_;
+    my @available_encodings = get_available_encoding();
+
+    my $die_message = <<_EOT_;
+Error: $message
+
+Usage: $0 [-n] [-v] [-j] [-d destination] [-f locale -t locale] file1.zip [file2.zip ...]
+
+  Boolean options
+    n: no test (default behavior is test only)
+    v: verbose mode
+    j: extract files without path
+
+  Argument options
+    d path  : destination directory
+    f locale: locale convert from
+    t locale: locale convert to
+
+  Available encoding list for f and t options
+    @available_encodings
+
+Author:
+Keedi Kim
+
+For bug reporting, please visit perlmania,
+URL:http://www.perlmania.or.kr
+_EOT_
+    
+    die "$die_message\n";
+}
+
