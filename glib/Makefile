@@ -2,7 +2,8 @@
 
 PROJECT := \
 	hello \
-	strsplit
+	strsplit \
+	regex
 
 all: $(PROJECT)
 
@@ -34,10 +35,14 @@ LDLAGS += $(GLIB_LDFLAGS)
 	$(MSG_C)
 	$(PREFIX)$(CC) -c -o $@ $(CFLAGS) $<
 
+hello: hello.o
+	$(MSG_L)
+	$(PREFIX)$(CC) -o $@ -g $^ $(LDLAGS)
+
 strsplit: strsplit.o
 	$(MSG_L)
 	$(PREFIX)$(CC) -o $@ -g $^ $(LDLAGS)
 
-hello: hello.o
+regex: regex.o
 	$(MSG_L)
 	$(PREFIX)$(CC) -o $@ -g $^ $(LDLAGS)
