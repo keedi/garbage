@@ -29,7 +29,9 @@ regex_test_address_and_port (const gchar *str)
   gchar *matched;
   gchar *pattern;
 
-  pattern = "https?://(?P<address>[^/:]*)(:(?P<port>\\d+))?";
+  g_print ("pattern: [%s]\n", str);
+
+  pattern = "(?P<protocol>https?)://(?P<address>[^/:]*)(:(?P<port>\\d+))?";
 
   err = NULL;
   regex = g_regex_new (pattern, 0, 0, &err);
@@ -41,6 +43,10 @@ regex_test_address_and_port (const gchar *str)
     }
 
   g_regex_match (regex, str, 0, &match_info);
+
+  matched = g_match_info_fetch_named (match_info, "protocol");
+  if (matched)
+    g_print ("protocol: [%s]\n", matched);
 
   matched = g_match_info_fetch_named (match_info, "address");
   if (matched)
