@@ -1,0 +1,5 @@
+*.o
+glib/hello
+glib/regex
+glib/strsplit
+*.swp
