@@ -1,0 +1,31 @@
+#!/usr/bin/perl
+
+use 5.010;
+
+my @configs = (
+    [ 'color.ui',               'auto' ],
+    [ 'color.branch.current',   'yellow reverse' ],
+    [ 'color.branch.local',     'yellow' ],
+    [ 'color.branch.remote',    'green' ],
+    [ 'color.diff.meta',        'yellow bold' ],
+    [ 'color.diff.frag',        'magenta bold' ],
+    [ 'color.diff.old',         'red bold' ],
+    [ 'color.diff.new',         'green bold' ],
+    [ 'color.diff.whitespace',  'red reverse' ],
+    [ 'color.status.added',     'yellow' ],
+    [ 'color.status.changed',   'green' ],
+    [ 'color.status.untracked', 'cyan' ],
+    [ 'branch.master.rebase',   'true' ],
+    [ 'core.whitespace',        'trailing-space,space-before-tab' ],
+    [ 'push.default',           'matching' ],
+    [ 'branch.autosetuprebase', 'always' ],
+);
+
+git_config( @$_ ) for @configs;
+
+sub git_config {
+    my ( $key, $value ) = @_;
+
+    say "git config --global '$key' '$value'";
+    system "git config --global '$key' '$value'";
+}
