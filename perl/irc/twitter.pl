@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 use utf8;
+use 5.010;
 
 package TwitBot;
 
@@ -11,9 +12,9 @@ use LWP::Simple;
 sub said {
     my ( $self, $args ) = @_;
 
-    $args->{body} =~ m|http://twitter.com/(.*?)/status/\d+|;
+    $args->{body} =~ m|https?://twitter.com/(.*?)/status/\d+|;
     my $id = $1;
-    my $url = $&;
+    ( my $url = $& ) =~ s/^https/http/;
 
     my $content = get( $url );
     if ($content =~ m|<meta content="(.*?)" name="description" />|) {
